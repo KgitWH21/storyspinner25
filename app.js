@@ -153,7 +153,8 @@ const generators = {
         if (!locked.has('Dist. Feature')) newChar['Dist. Feature'] = utils.random(data.appearance.distinctive_features);
 
         // Personality
-        if (!locked.has('Trait')) newChar['Trait'] = utils.random(data.personality.traits);
+        if (!locked.has('PERSONALITY TRAIT 1')) newChar['PERSONALITY TRAIT 1'] = utils.random(data.personality.traits);
+        if (!locked.has('PERSONALITY TRAIT 2')) newChar['PERSONALITY TRAIT 2'] = utils.random(data.personality.traits);
         if (!locked.has('Flaw')) newChar['Flaw'] = utils.random(data.personality.flaws);
         if (!locked.has('Value')) newChar['Value'] = utils.random(data.personality.values);
         if (!locked.has('Motivation')) newChar['Motivation'] = utils.random(data.personality.motivations);
@@ -174,6 +175,10 @@ const generators = {
             const status = Math.random() > 0.3 ? data.parent_status_alive : data.parent_status_deceased;
             newChar['Father Status'] = utils.random(status);
         }
+
+        // Life Trauma
+        if (!locked.has('Life Trauma 1')) newChar['Life Trauma 1'] = utils.random(data.PRIMARY_TRAUMATIC_EVENT);
+        if (!locked.has('Life Trauma 2')) newChar['Life Trauma 2'] = utils.random(data.SECONDARY_TRAUMATIC_EVENT);
 
         if (!locked.has('Name Type')) newChar['Name Type'] = utils.random(data.CHARACTER_NAME_TYPE);
 
@@ -350,8 +355,8 @@ const render = {
         const sections = {
             'BASIC INFORMATION': ['Name', 'Race', 'Gender', 'Age'],
             'APPEARANCE': ['Height', 'Build', 'Hair Color', 'Hair Style', 'Eye Color', 'Skin Tone', 'Dist. Feature'],
-            'PERSONALITY': ['Trait', 'Flaw', 'Value', 'Motivation'],
-            'BACKGROUND': ['Attracted To', 'Occupation', 'Social Class', 'Homeland', 'Family', 'National Heritage', 'Mother Status', 'Father Status', 'Name Type'],
+            'PERSONALITY': ['PERSONALITY TRAIT 1', 'PERSONALITY TRAIT 2', 'Flaw', 'Value', 'Motivation'],
+            'BACKGROUND': ['Attracted To', 'Occupation', 'Social Class', 'Homeland', 'Family', 'National Heritage', 'Mother Status', 'Father Status', 'Life Trauma 1', 'Life Trauma 2', 'Name Type'],
             'ABILITIES': ['Skills', 'Special Ability', 'Notable Equipment'],
             'RELATIONSHIPS': ['Relationship Status', 'Ally', 'Enemy', 'Organization'],
             'DETAILS': ['Story Style', 'Intimate Preference'],
