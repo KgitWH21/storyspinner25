@@ -1,0 +1,66 @@
+    <div class="app-container">
+        <header class="app-header">
+            <h1>StorySpinner 25</h1>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="nav-btn active" data-tab="characters">Characters</button>
+            <button class="nav-btn" data-tab="stories">Stories</button>
+            <button class="nav-btn" data-tab="music">Music</button>
+        </nav>
+
+        <main>
+            <!-- Characters Section -->
+            <section id="characters" class="content-section active">
+                <div class="controls">
+                    <button id="generate-char" class="primary-btn">Generate Character</button>
+                    <button id="copy-char" class="secondary-btn">Copy to Clipboard</button>
+                </div>
+                <div id="char-result" class="result-container">
+                    <div class="placeholder-text">Press Generate to create a character...</div>
+                </div>
+
+                <!-- Tarot Sub-Section (Integrated) -->
+                <div class="tarot-integration">
+                    <div class="section-header">Character Tarot Arc</div>
+                    <div class="controls">
+                        <select id="tarot-layout" class="layout-select">
+                            <!-- Options populated by JS -->
+                        </select>
+                        <button id="generate-tarot" class="primary-btn">Draw Arc</button>
+                        <button id="copy-tarot" class="secondary-btn">Copy Arc</button>
+                    </div>
+                    <div id="tarot-result" class="result-container tarot-container">
+                        <div class="placeholder-text">Select a layout and Draw Arc...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stories Section -->
+            <section id="stories" class="content-section">
+                <div class="controls">
+                    <button id="generate-story" class="primary-btn">Spin Story</button>
+                    <button id="copy-story" class="secondary-btn">Copy to Clipboard</button>
+                </div>
+                <div id="story-result" class="result-container">
+                    <div class="placeholder-text">Press Spin Story to generate a plot...</div>
+                </div>
+            </section>
+
+            <!-- Music Section -->
+            <section id="music" class="content-section">
+                <div class="controls">
+                    <button id="generate-music" class="primary-btn">Inspire Music</button>
+                    <button id="copy-music" class="secondary-btn">Copy to Clipboard</button>
+                </div>
+                <div id="music-result" class="result-container">
+                    <div class="placeholder-text">Press Inspire Music to generate a prompt...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
