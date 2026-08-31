@@ -1,6 +1,6 @@
 # StorySpinner 25
 
-A mobile-friendly web application for generating characters, story seeds, and music prompts using existing JSON data.
+A mobile-friendly web application for generating characters, story seeds, music prompts, and art styles using existing JSON data.
 
 ## Setup & Installation
 
@@ -11,6 +11,7 @@ A mobile-friendly web application for generating characters, story seeds, and mu
     *   `character_elements.json`
     *   `story_elements.json`
     *   `music_elements.json`
+    *   `art_elements.json`
 
 2.  **Running Locally**:
     *   Due to browser security restrictions (CORS), you cannot simply double-click `index.html` to load the JSON files.
@@ -22,8 +23,8 @@ A mobile-friendly web application for generating characters, story seeds, and mu
 
 ## Updating Data
 
-*   The application reads directly from the three JSON files.
-*   To update the content (e.g., add new traits, genres, or instruments), simply edit the JSON files in a text editor.
+*   The application reads directly from the JSON files.
+*   To update the content (e.g., add new traits, genres, instruments, or art styles), simply edit the JSON files in a text editor.
 *   **Do not change the structure** (keys or nesting) of the JSON files, as the code relies on the existing schema. You can safely add strings to existing arrays.
 
 ## Features
@@ -31,6 +32,7 @@ A mobile-friendly web application for generating characters, story seeds, and mu
 *   **Character Creator**: Generate unique characters with detailed appearance, personality, background, abilities, relationships, and story hooks.
 *   **Story Spinner**: Create plot outlines with archetypes, themes, and conflicts.
 *   **Music Prompts**: Generate inspiration for music composition.
+*   **Art Style Spinner**: Pick two styles from a large list of movements, media, and regional looks.
 *   **Tarot Arc Generator**: Draw 3-card tarot arcs using various layouts (e.g., "Classic Three-Card", "Problem/Action/Resolution").
 *   **Locking**: Click the padlock icon next to any field to lock its value while re-rolling others.
 *   **Persistence**: Your last active tab, generated results, and lock states are saved automatically.

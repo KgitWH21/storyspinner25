@@ -4,19 +4,22 @@ const state = {
     data: {
         characters: null,
         stories: null,
-        music: null
+        music: null,
+        art: null
     },
     currentTab: 'characters',
     generated: {
         characters: {},
         stories: {},
         music: {},
-        tarot: {}
+        tarot: {},
+        art: {}
     },
     locked: {
         characters: new Set(),
         stories: new Set(),
-        music: new Set()
+        music: new Set(),
+        art: new Set()
     }
 };
 
@@ -44,7 +47,12 @@ const elements = {
     // Music Elements
     generateMusicBtn: document.getElementById('generate-music'),
     copyMusicBtn: document.getElementById('copy-music'),
-    musicResult: document.getElementById('music-result')
+    musicResult: document.getElementById('music-result'),
+
+    // Art Elements
+    generateArtBtn: document.getElementById('generate-art'),
+    copyArtBtn: document.getElementById('copy-art'),
+    artResult: document.getElementById('art-result')
 };
 
 // Utility Functions
@@ -95,15 +103,17 @@ const utils = {
 // Data Fetching
 async function loadData() {
     try {
-        const [charRes, storyRes, musicRes] = await Promise.all([
+        const [charRes, storyRes, musicRes, artRes] = await Promise.all([
             fetch('character_elements.json'),
             fetch('story_elements.json'),
-            fetch('music_elements.json')
+            fetch('music_elements.json'),
+            fetch('art_elements.json')
         ]);
 
         state.data.characters = await charRes.json();
         state.data.stories = await storyRes.json();
         state.data.music = await musicRes.json();
+        state.data.art = await artRes.json();
 
         // Populate Tarot Layouts
         if (state.data.characters.tarot_layouts) {
@@ -290,6 +300,30 @@ const generators = {
         saveState();
     },
 
+    art: () => {
+        const styles = state.data.art.styles;
+        const current = state.generated.art;
+        const locked = state.locked.art;
+        const newArt = { ...current };
+
+        const pickStyle = (other) => {
+            let style = utils.random(styles);
+            while (style === other) style = utils.random(styles);
+            return style;
+        };
+
+        if (!locked.has('Style 1')) {
+            newArt['Style 1'] = pickStyle(locked.has('Style 2') ? newArt['Style 2'] : null);
+        }
+        if (!locked.has('Style 2')) {
+            newArt['Style 2'] = pickStyle(newArt['Style 1']);
+        }
+
+        state.generated.art = newArt;
+        render.art();
+        saveState();
+    },
+
     tarot: () => {
         const layoutIndex = elements.tarotLayout.value;
         const layout = state.data.characters.tarot_layouts[layoutIndex];
@@ -429,6 +463,23 @@ const render = {
         });
     },
 
+    art: () => {
+        const container = elements.artResult;
+        container.innerHTML = '';
+        const data = state.generated.art;
+
+        if (!data || Object.keys(data).length === 0) {
+            container.innerHTML = '<div class="placeholder-text">Press Spin Styles to get two art styles...</div>';
+            return;
+        }
+
+        ['Style 1', 'Style 2'].forEach(field => {
+            if (data[field]) {
+                container.appendChild(render.createField(field, data[field], 'art'));
+            }
+        });
+    },
+
     tarot: () => {
         const container = elements.tarotResult;
         container.innerHTML = '';
@@ -487,7 +538,8 @@ function saveState() {
         locked: {
             characters: Array.from(state.locked.characters),
             stories: Array.from(state.locked.stories),
-            music: Array.from(state.locked.music)
+            music: Array.from(state.locked.music),
+            art: Array.from(state.locked.art)
         },
         tarotLayoutIndex: elements.tarotLayout.value
     };
@@ -500,12 +552,20 @@ function restoreState() {
         try {
             const parsed = JSON.parse(saved);
             state.currentTab = parsed.currentTab || 'characters';
-            state.generated = parsed.generated || state.generated;
+            state.generated = {
+                characters: {},
+                stories: {},
+                music: {},
+                tarot: {},
+                art: {},
+                ...(parsed.generated || {})
+            };
 
             if (parsed.locked) {
                 state.locked.characters = new Set(parsed.locked.characters);
                 state.locked.stories = new Set(parsed.locked.stories);
                 state.locked.music = new Set(parsed.locked.music);
+                state.locked.art = new Set(parsed.locked.art || []);
             }
 
             if (parsed.tarotLayoutIndex !== undefined && elements.tarotLayout.options.length > 0) {
@@ -517,6 +577,7 @@ function restoreState() {
             render.characters();
             render.stories();
             render.music();
+            render.art();
             render.tarot();
         } catch (e) {
             console.error('Failed to restore state', e);
@@ -560,6 +621,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.generateMusicBtn = document.getElementById('generate-music');
     elements.copyMusicBtn = document.getElementById('copy-music');
     elements.musicResult = document.getElementById('music-result');
+    elements.generateArtBtn = document.getElementById('generate-art');
+    elements.copyArtBtn = document.getElementById('copy-art');
+    elements.artResult = document.getElementById('art-result');
 
     // Attach Event Listeners
     if (elements.navButtons) {
@@ -572,6 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.spinStoryBtn) elements.spinStoryBtn.addEventListener('click', generators.stories); // Note: ID in HTML is generate-story, but elements key was generateStoryBtn. Let's fix this mapping below.
     if (elements.generateStoryBtn) elements.generateStoryBtn.addEventListener('click', generators.stories);
     if (elements.generateMusicBtn) elements.generateMusicBtn.addEventListener('click', generators.music);
+    if (elements.generateArtBtn) elements.generateArtBtn.addEventListener('click', generators.art);
     if (elements.generateTarotBtn) elements.generateTarotBtn.addEventListener('click', generators.tarot);
 
     if (elements.copyCharBtn) elements.copyCharBtn.addEventListener('click', () => {
@@ -586,6 +651,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.copyMusicBtn) elements.copyMusicBtn.addEventListener('click', () => {
         const text = utils.formatOutput(state.generated.music);
+        if (text) utils.copyToClipboard(text);
+    });
+
+    if (elements.copyArtBtn) elements.copyArtBtn.addEventListener('click', () => {
+        const text = utils.formatOutput(state.generated.art);
         if (text) utils.copyToClipboard(text);
     });
 

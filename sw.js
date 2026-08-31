@@ -1,4 +1,4 @@
-const CACHE_NAME = 'storyspinner-v1';
+const CACHE_NAME = 'storyspinner-v2';
 const ASSETS = [
     './',
     './index.html',
@@ -8,7 +8,8 @@ const ASSETS = [
     './story_spinner_icon.png',
     './character_elements.json',
     './story_elements.json',
-    './music_elements.json'
+    './music_elements.json',
+    './art_elements.json'
 ];
 
 self.addEventListener('install', (e) => {
