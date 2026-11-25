@@ -1,6 +1,6 @@
-# How to Run StorySpinner 25 on Mobile & Desktop
+# How to Run StorySpinner on Mobile & Desktop
 
-You can access StorySpinner 25 on any device (phone, tablet, laptop) without needing Antigravity open, as long as you have the files.
+You can access StorySpinner on any device (phone, tablet, laptop) without needing Antigravity open, as long as you have the files.
 
 ## Option 1: Local Network (Quickest)
 Since you are already running a local server (`python -m http.server`), you can access the app from your phone if it's on the **same Wi-Fi network**.

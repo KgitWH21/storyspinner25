@@ -1,4 +1,4 @@
-# StorySpinner 25
+# StorySpinner
 
 A mobile-friendly web application for generating characters, story seeds, music prompts, and art styles using existing JSON data.
 

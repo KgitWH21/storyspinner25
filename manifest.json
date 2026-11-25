@@ -1,5 +1,5 @@
 {
-    "name": "StorySpinner 25",
+    "name": "StorySpinner",
     "short_name": "StorySpinner",
     "start_url": "./index.html",
     "display": "standalone",
