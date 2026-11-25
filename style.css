@@ -231,3 +231,259 @@ button:active {
     opacity: 1;
     color: var(--accent-secondary);
 }
+.lock-btn.locked {
+    opacity: 1;
+    color: var(--accent-secondary);
+}
+
+.section-header {
+    color: var(--accent-secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 8px;
+}
+
+.story-summary,
+.prompt-output {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    color: var(--text-primary);
+    line-height: 1.7;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+}
+
+.layout-select,
+.idea-input {
+    font-family: var(--font-main);
+    font-size: 1rem;
+    color: var(--text-primary);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 12px;
+    width: 100%;
+    max-width: 100%;
+}
+
+.layout-select:focus,
+.idea-input:focus {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.select-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    flex: 1 1 180px;
+    min-width: 0;
+}
+
+.prompt-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.prompt-selects {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.prompt-selects .select-label {
+    flex: 1 1 220px;
+}
+
+.idea-input {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+}
+
+.tarot-integration {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tarot-layout-title {
+    font-size: 1.1rem;
+    color: var(--accent-secondary);
+}
+
+.tarot-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tarot-card {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tarot-slot-header {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-primary);
+}
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-secondary);
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    max-width: calc(100vw - 32px);
+    overflow-wrap: anywhere;
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.favorite-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    min-width: 0;
+}
+
+.favorite-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.favorite-type {
+    color: var(--accent-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.favorite-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+.favorite-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.favorite-actions button {
+    flex: 1;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+}
+
+.result-container,
+.field-group,
+.field-value,
+.app-container {
+    min-width: 0;
+}
+
+.result-container {
+    overflow-x: hidden;
+}
+
+@media (max-width: 480px) {
+    .app-container {
+        padding: 12px;
+        gap: 14px;
+    }
+
+    .tab-nav {
+        gap: 6px;
+    }
+
+    .nav-btn {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+        min-width: 64px;
+        flex: 1 1 21%;
+    }
+
+    button {
+        padding: 10px 14px;
+    }
+
+    .result-card,
+    .result-container {
+        padding: 16px;
+        min-height: 200px;
+    }
+
+    .field-group {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .field-label {
+        flex: 1 1 100%;
+        text-align: left;
+    }
+
+    .field-value {
+        flex: 1 1 auto;
+        text-align: left;
+        margin-right: 8px;
+    }
+
+    .lock-btn {
+        margin-left: auto;
+        padding: 4px;
+    }
+}

@@ -19,8 +19,11 @@
         <nav class="tab-nav">
             <button class="nav-btn active" data-tab="characters">Characters</button>
             <button class="nav-btn" data-tab="stories">Stories</button>
+            <button class="nav-btn" data-tab="prompt">Prompt</button>
+            <button class="nav-btn" data-tab="codex">Codex</button>
             <button class="nav-btn" data-tab="music">Music</button>
             <button class="nav-btn" data-tab="art">Art</button>
+            <button class="nav-btn" data-tab="favorites">Favorites</button>
         </nav>
 
         <main>
@@ -29,6 +32,7 @@
                 <div class="controls">
                     <button id="generate-char" class="primary-btn">Generate Character</button>
                     <button id="copy-char" class="secondary-btn">Copy to Clipboard</button>
+                    <button id="save-char" class="secondary-btn">★ Save character</button>
                 </div>
                 <div id="char-result" class="result-container">
                     <div class="placeholder-text">Press Generate to create a character...</div>
@@ -61,6 +65,52 @@
                 </div>
             </section>
 
+            <!-- Story Prompt Section -->
+            <section id="prompt" class="content-section">
+                <div class="prompt-controls">
+                    <div class="prompt-selects">
+                        <label class="select-label" for="prompt-form">Form
+                            <select id="prompt-form" class="layout-select">
+                                <option value="Microfiction" data-length="under 300 words">Microfiction -- under 300 words</option>
+                                <option value="Flash fiction" data-length="500-1,000 words" selected>Flash fiction -- 500-1,000 words</option>
+                                <option value="Short story" data-length="3,000-5,000 words">Short story -- 3,000-5,000 words</option>
+                                <option value="Poem" data-length="12-40 lines">Poem -- 12-40 lines</option>
+                                <option value="Scene" data-length="800-1,500 words">Scene -- 800-1,500 words</option>
+                                <option value="Opening chapter" data-length="2,000-4,000 words">Opening chapter -- 2,000-4,000 words</option>
+                            </select>
+                        </label>
+                        <label class="select-label" for="prompt-tone">Tone
+                            <select id="prompt-tone" class="layout-select">
+                                <option value="">Optional -- leave open</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="controls">
+                        <button id="generate-prompt" class="primary-btn">Spin prompt</button>
+                        <button id="copy-prompt" class="secondary-btn">Copy prompt</button>
+                        <button id="save-prompt" class="secondary-btn">★ Save prompt</button>
+                    </div>
+                </div>
+                <div id="prompt-result" class="result-container">
+                    <div class="placeholder-text">Pick a form and spin a prompt you can paste anywhere...</div>
+                </div>
+            </section>
+
+            <!-- Codex Spin Section -->
+            <section id="codex" class="content-section">
+                <label class="select-label" for="codex-idea">Old idea or premise
+                    <textarea id="codex-idea" class="idea-input" rows="5" placeholder="Paste or type an old idea, fragment, or premise you want to revive..."></textarea>
+                </label>
+                <div class="controls">
+                    <button id="generate-codex" class="primary-btn">Spin twists</button>
+                    <button id="copy-codex" class="secondary-btn">Copy revival</button>
+                    <button id="save-codex" class="secondary-btn">★ Save revival</button>
+                </div>
+                <div id="codex-result" class="result-container">
+                    <div class="placeholder-text">Paste an old idea, then spin three twists to wake it up...</div>
+                </div>
+            </section>
+
             <!-- Music Section -->
             <section id="music" class="content-section">
                 <div class="controls">
@@ -82,8 +132,20 @@
                     <div class="placeholder-text">Press Spin Styles to get two art styles...</div>
                 </div>
             </section>
+
+            <!-- Favorites Section -->
+            <section id="favorites" class="content-section">
+                <div class="controls">
+                    <button id="export-favorites" class="primary-btn">Export all</button>
+                </div>
+                <div id="favorites-result" class="result-container">
+                    <div class="placeholder-text">Saved prompts, revivals, and characters will land here...</div>
+                </div>
+            </section>
         </main>
     </div>
+
+    <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
     <script src="app.js" defer></script>
 </body>

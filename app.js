@@ -13,14 +13,22 @@ const state = {
         stories: {},
         music: {},
         tarot: {},
-        art: {}
+        art: {},
+        prompt: {},
+        codex: {}
     },
     locked: {
         characters: new Set(),
         stories: new Set(),
         music: new Set(),
-        art: new Set()
-    }
+        art: new Set(),
+        prompt: new Set(),
+        codex: new Set()
+    },
+    promptForm: 'Flash fiction',
+    promptTone: '',
+    codexIdea: '',
+    codexTwists: []
 };
 
 // DOM Elements
@@ -52,7 +60,28 @@ const elements = {
     // Art Elements
     generateArtBtn: document.getElementById('generate-art'),
     copyArtBtn: document.getElementById('copy-art'),
-    artResult: document.getElementById('art-result')
+    artResult: document.getElementById('art-result'),
+
+    // Prompt Elements
+    promptForm: document.getElementById('prompt-form'),
+    promptTone: document.getElementById('prompt-tone'),
+    generatePromptBtn: document.getElementById('generate-prompt'),
+    copyPromptBtn: document.getElementById('copy-prompt'),
+    savePromptBtn: document.getElementById('save-prompt'),
+    promptResult: document.getElementById('prompt-result'),
+
+    // Codex Elements
+    codexIdea: document.getElementById('codex-idea'),
+    generateCodexBtn: document.getElementById('generate-codex'),
+    copyCodexBtn: document.getElementById('copy-codex'),
+    saveCodexBtn: document.getElementById('save-codex'),
+    codexResult: document.getElementById('codex-result'),
+
+    // Favorites and shared
+    saveCharBtn: document.getElementById('save-char'),
+    exportFavoritesBtn: document.getElementById('export-favorites'),
+    favoritesResult: document.getElementById('favorites-result'),
+    toast: document.getElementById('toast')
 };
 
 // Utility Functions
@@ -70,11 +99,15 @@ const utils = {
     },
 
     copyToClipboard: (text) => {
+        if (!text) {
+            showToast('Nothing to copy yet.');
+            return;
+        }
         navigator.clipboard.writeText(text).then(() => {
-            alert('Copied to clipboard!');
+            showToast('Copied.');
         }).catch(err => {
             console.error('Failed to copy:', err);
-            alert('Failed to copy to clipboard');
+            showToast('Could not copy-- try selecting the text instead.');
         });
     },
 
@@ -100,6 +133,228 @@ const utils = {
     }
 };
 
+
+
+const FAVORITES_KEY = 'storySpinnerFavorites';
+const CRAFT_NOTES = [
+    'Prefer specific, concrete, real-world details over generic ones.',
+    'Vary your sentence structure.',
+    'Show character through action, not explanation.',
+    'Avoid clichés and repetitive phrasing.'
+];
+const TWIST_TYPES = [
+    { key: 'pov_shift', label: 'POV shift' },
+    { key: 'era_setting_shift', label: 'Era or setting' },
+    { key: 'stakes_escalation', label: 'Stakes' },
+    { key: 'genre_flip', label: 'Genre flip' },
+    { key: 'structure_form', label: 'Structure' },
+    { key: 'what_if', label: 'What if' }
+];
+
+let toastTimer;
+
+function showToast(message) {
+    const el = elements.toast || document.getElementById('toast');
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = message;
+    requestAnimationFrame(() => el.classList.add('visible'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        el.classList.remove('visible');
+        setTimeout(() => { el.hidden = true; }, 200);
+    }, 1600);
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function withArticle(phrase) {
+    const first = (phrase || '').trim();
+    const article = /^[aeiou]/i.test(first) ? 'an' : 'a';
+    return `${article} ${first}`;
+}
+
+function lowerStart(str) {
+    if (!str) return '';
+    return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+function formatStamp(iso) {
+    const date = iso ? new Date(iso) : new Date();
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+}
+
+function getSelectedForm() {
+    const select = elements.promptForm;
+    if (!select) return { name: 'Flash fiction', length: '500-1,000 words' };
+    const option = select.options[select.selectedIndex];
+    return {
+        name: select.value,
+        length: (option && option.dataset.length) || ''
+    };
+}
+
+function motivationClause(motivation) {
+    const text = (motivation || '').trim();
+    if (!text) return 'They want something they cannot name yet.';
+    if (/\s/.test(text) && !/^to\s/i.test(text)) {
+        return `They want to ${lowerStart(text)}.`;
+    }
+    return `They want ${lowerStart(text)}.`;
+}
+
+function buildCharacterLine(parts) {
+    const who = withArticle(`${parts.descriptor} ${lowerStart(parts.occupation)}`);
+    return `${who}. They are ${lowerStart(parts.trait)}, but ${lowerStart(parts.flaw)}. ${motivationClause(parts.motivation)}`;
+}
+
+function formLeadIn(form) {
+    const name = form.name;
+    const length = form.length;
+    if (name === 'Microfiction') return `Write a microfiction piece (${length})`;
+    if (name === 'Flash fiction') return `Write a flash fiction story (${length})`;
+    if (name === 'Short story') return `Write a short story (${length})`;
+    if (name === 'Poem') return `Write a poem (${length})`;
+    if (name === 'Scene') return `Write a single scene (${length})`;
+    if (name === 'Opening chapter') return `Write an opening chapter (${length})`;
+    return `Write a ${lowerStart(name)} (${length})`;
+}
+
+function buildPromptText(fields) {
+    const form = getSelectedForm();
+    const tone = elements.promptTone ? elements.promptTone.value : '';
+    const toneClause = tone ? ` in a ${tone} tone` : '';
+    const lines = [
+        `${formLeadIn(form)}${toneClause}.`,
+        '',
+        `Point of view: ${fields['POV']}`,
+        `Genre: ${fields['Genre']}`,
+        `Archetype: ${fields['Archetype']}`,
+        '',
+        `Character: ${fields['Character']}`,
+        `Conflict: ${fields['Conflict']}`,
+        `Theme: ${fields['Theme']}`,
+        `Setting: ${fields['Setting']}`,
+        `Sensory hook: ${fields['Sensory hook']}`,
+        '',
+        'Craft notes:',
+        ...CRAFT_NOTES.map(note => `- ${note}`)
+    ];
+    return lines.join('\n');
+}
+
+function buildRevivalText(idea, twists) {
+    const lines = [
+        `Revive this idea: ${idea.trim()}`,
+        '',
+        'Apply these twists:'
+    ];
+    twists.forEach((twist, i) => {
+        lines.push(`${i + 1}. ${twist.label}: ${twist.value}`);
+    });
+    lines.push('');
+    lines.push('Keep the heart of the original idea, and let these twists change the approach.');
+    lines.push('Craft notes:');
+    CRAFT_NOTES.forEach(note => lines.push(`- ${note}`));
+    return lines.join('\n');
+}
+
+function loadFavorites() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        console.error('Failed to read favorites', e);
+        return [];
+    }
+}
+
+function persistFavorites(items) {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(items));
+}
+
+function saveFavorite(type, text) {
+    if (!text || !String(text).trim()) {
+        showToast('Nothing to save yet.');
+        return;
+    }
+    const items = loadFavorites();
+    const trimmed = String(text).trim();
+    if (items[0] && items[0].text === trimmed && items[0].type === type) {
+        showToast('Already saved.');
+        return;
+    }
+    items.unshift({
+        id: `fav-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        type,
+        text: trimmed,
+        savedAt: new Date().toISOString()
+    });
+    persistFavorites(items);
+    render.favorites();
+    showToast('Saved to Favorites.');
+}
+
+function deleteFavorite(id) {
+    const items = loadFavorites().filter(item => item.id !== id);
+    persistFavorites(items);
+    render.favorites();
+    showToast('Removed.');
+}
+
+function exportFavorites() {
+    const items = loadFavorites();
+    if (!items.length) {
+        showToast('No favorites to export yet.');
+        return;
+    }
+    const parts = ['STORYSPINNER FAVORITES', `Exported ${formatStamp(new Date().toISOString())}`, ''];
+    items.forEach(item => {
+        parts.push(`--- ${item.type} | ${formatStamp(item.savedAt)} ---`);
+        parts.push(item.text);
+        parts.push('');
+    });
+    const blob = new Blob([parts.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'storyspinner-favorites.txt';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast('Favorites exported.');
+}
+
+function populateToneSelect() {
+    const select = elements.promptTone;
+    const extras = state.data.stories && state.data.stories.prompt_extras;
+    if (!select || !extras) return;
+    const current = state.promptTone || select.value || '';
+    select.innerHTML = '<option value="">Optional -- leave open</option>';
+    extras.tones.forEach(tone => {
+        const option = document.createElement('option');
+        option.value = tone;
+        option.textContent = tone;
+        select.appendChild(option);
+    });
+    if ([...select.options].some(opt => opt.value === current)) {
+        select.value = current;
+    }
+}
+
 // Data Fetching
 async function loadData() {
     try {
@@ -114,6 +369,8 @@ async function loadData() {
         state.data.stories = await storyRes.json();
         state.data.music = await musicRes.json();
         state.data.art = await artRes.json();
+
+        populateToneSelect();
 
         // Populate Tarot Layouts
         if (state.data.characters.tarot_layouts) {
@@ -352,6 +609,88 @@ const generators = {
         state.generated.tarot = arc;
         render.tarot();
         saveState();
+    },
+
+    prompt: () => {
+        const story = state.data.stories;
+        const chars = state.data.characters;
+        const current = state.generated.prompt;
+        const locked = state.locked.prompt;
+        const extras = story.prompt_extras || { tones: [], sensory_hooks: [] };
+        const next = { ...current };
+
+        if (!locked.has('POV')) next['POV'] = utils.random(story.plot.perspectives);
+        if (!locked.has('Genre')) next['Genre'] = utils.random(story.plot.genres);
+        if (!locked.has('Archetype')) next['Archetype'] = utils.random(story.plot.archetypes);
+        if (!locked.has('Character')) {
+            next['Character'] = buildCharacterLine({
+                descriptor: utils.random(story.character.descriptors),
+                occupation: utils.random(chars.background.occupation),
+                trait: utils.random(chars.personality.traits),
+                flaw: utils.random(chars.personality.flaws),
+                motivation: utils.random(chars.personality.motivations)
+            });
+        }
+        if (!locked.has('Conflict')) next['Conflict'] = utils.random(chars.BASIC_EVENT);
+        if (!locked.has('Theme')) next['Theme'] = utils.random(story.plot.universal_human_questions);
+        if (!locked.has('Setting')) next['Setting'] = utils.random(chars.background.homeland);
+        if (!locked.has('Sensory hook')) next['Sensory hook'] = utils.random(extras.sensory_hooks);
+
+        next['Prompt'] = buildPromptText(next);
+        state.generated.prompt = next;
+        render.prompt();
+        saveState();
+    },
+
+    codex: () => {
+        const idea = (elements.codexIdea && elements.codexIdea.value || state.codexIdea || '').trim();
+        if (!idea) {
+            showToast('Paste or type an idea first.');
+            return;
+        }
+        state.codexIdea = idea;
+
+        const pools = state.data.stories.codex_spin;
+        const locked = state.locked.codex;
+        const current = state.codexTwists || [];
+        const usedKeys = new Set();
+        const nextTwists = [];
+
+        for (let i = 0; i < 3; i++) {
+            const field = `Twist ${i + 1}`;
+            const existing = current[i];
+            if (locked.has(field) && existing) {
+                nextTwists.push(existing);
+                usedKeys.add(existing.key);
+            } else {
+                nextTwists.push(null);
+            }
+        }
+
+        for (let i = 0; i < 3; i++) {
+            if (nextTwists[i]) continue;
+            const available = TWIST_TYPES.filter(type => !usedKeys.has(type.key) && pools[type.key] && pools[type.key].length);
+            const pool = available.length ? available : TWIST_TYPES.filter(type => pools[type.key] && pools[type.key].length);
+            const type = utils.random(pool);
+            usedKeys.add(type.key);
+            nextTwists[i] = {
+                field: `Twist ${i + 1}`,
+                key: type.key,
+                label: type.label,
+                value: utils.random(pools[type.key])
+            };
+        }
+
+        const generated = { Idea: idea };
+        nextTwists.forEach((twist, i) => {
+            generated[`Twist ${i + 1}`] = `${twist.label}: ${twist.value}`;
+        });
+        generated['Prompt'] = buildRevivalText(idea, nextTwists);
+
+        state.codexTwists = nextTwists;
+        state.generated.codex = generated;
+        render.codex();
+        saveState();
     }
 };
 
@@ -527,6 +866,107 @@ const render = {
         });
 
         container.appendChild(grid);
+    },
+
+    prompt: () => {
+        const container = elements.promptResult;
+        if (!container) return;
+        container.innerHTML = '';
+        const data = state.generated.prompt;
+
+        if (!data || !data['Prompt']) {
+            container.innerHTML = '<div class="placeholder-text">Pick a form and spin a prompt you can paste anywhere...</div>';
+            return;
+        }
+
+        const fields = ['POV', 'Genre', 'Archetype', 'Character', 'Conflict', 'Theme', 'Setting', 'Sensory hook'];
+        fields.forEach(field => {
+            if (data[field]) {
+                container.appendChild(render.createField(field, data[field], 'prompt'));
+            }
+        });
+
+        const preview = document.createElement('div');
+        preview.className = 'prompt-output';
+        preview.id = 'prompt-output-text';
+        preview.textContent = data['Prompt'];
+        container.appendChild(preview);
+    },
+
+    codex: () => {
+        const container = elements.codexResult;
+        if (!container) return;
+        container.innerHTML = '';
+        const data = state.generated.codex;
+
+        if (!data || !data['Prompt']) {
+            container.innerHTML = '<div class="placeholder-text">Paste an old idea, then spin three twists to wake it up...</div>';
+            return;
+        }
+
+        ['Twist 1', 'Twist 2', 'Twist 3'].forEach(field => {
+            if (data[field]) {
+                container.appendChild(render.createField(field, data[field], 'codex'));
+            }
+        });
+
+        const preview = document.createElement('div');
+        preview.className = 'prompt-output';
+        preview.id = 'codex-output-text';
+        preview.textContent = data['Prompt'];
+        container.appendChild(preview);
+    },
+
+    favorites: () => {
+        const container = elements.favoritesResult;
+        if (!container) return;
+        container.innerHTML = '';
+        const items = loadFavorites();
+
+        if (!items.length) {
+            container.innerHTML = '<div class="placeholder-text">Saved prompts, revivals, and characters will land here...</div>';
+            return;
+        }
+
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'favorite-item';
+            card.dataset.id = item.id;
+
+            const meta = document.createElement('div');
+            meta.className = 'favorite-meta';
+            const type = document.createElement('span');
+            type.className = 'favorite-type';
+            type.textContent = item.type;
+            const when = document.createElement('span');
+            when.textContent = formatStamp(item.savedAt);
+            meta.appendChild(type);
+            meta.appendChild(when);
+
+            const body = document.createElement('div');
+            body.className = 'favorite-text';
+            body.textContent = item.text;
+
+            const actions = document.createElement('div');
+            actions.className = 'favorite-actions';
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'secondary-btn';
+            copyBtn.type = 'button';
+            copyBtn.textContent = 'Copy';
+            copyBtn.addEventListener('click', () => utils.copyToClipboard(item.text));
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'secondary-btn';
+            deleteBtn.type = 'button';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => deleteFavorite(item.id));
+            actions.appendChild(copyBtn);
+            actions.appendChild(deleteBtn);
+
+            card.appendChild(meta);
+            card.appendChild(body);
+            card.appendChild(actions);
+            container.appendChild(card);
+        });
     }
 };
 
@@ -539,9 +979,15 @@ function saveState() {
             characters: Array.from(state.locked.characters),
             stories: Array.from(state.locked.stories),
             music: Array.from(state.locked.music),
-            art: Array.from(state.locked.art)
+            art: Array.from(state.locked.art),
+            prompt: Array.from(state.locked.prompt),
+            codex: Array.from(state.locked.codex)
         },
-        tarotLayoutIndex: elements.tarotLayout.value
+        tarotLayoutIndex: elements.tarotLayout ? elements.tarotLayout.value : undefined,
+        promptForm: elements.promptForm ? elements.promptForm.value : state.promptForm,
+        promptTone: elements.promptTone ? elements.promptTone.value : state.promptTone,
+        codexIdea: elements.codexIdea ? elements.codexIdea.value : state.codexIdea,
+        codexTwists: state.codexTwists
     };
     localStorage.setItem('storySpinnerState', JSON.stringify(toSave));
 }
@@ -558,6 +1004,8 @@ function restoreState() {
                 music: {},
                 tarot: {},
                 art: {},
+                prompt: {},
+                codex: {},
                 ...(parsed.generated || {})
             };
 
@@ -566,10 +1014,27 @@ function restoreState() {
                 state.locked.stories = new Set(parsed.locked.stories);
                 state.locked.music = new Set(parsed.locked.music);
                 state.locked.art = new Set(parsed.locked.art || []);
+                state.locked.prompt = new Set(parsed.locked.prompt || []);
+                state.locked.codex = new Set(parsed.locked.codex || []);
             }
 
-            if (parsed.tarotLayoutIndex !== undefined && elements.tarotLayout.options.length > 0) {
+            if (parsed.tarotLayoutIndex !== undefined && elements.tarotLayout && elements.tarotLayout.options.length > 0) {
                 elements.tarotLayout.value = parsed.tarotLayoutIndex;
+            }
+
+            state.promptForm = parsed.promptForm || state.promptForm;
+            state.promptTone = parsed.promptTone || '';
+            state.codexIdea = parsed.codexIdea || '';
+            state.codexTwists = parsed.codexTwists || [];
+
+            if (elements.promptForm && state.promptForm) {
+                elements.promptForm.value = state.promptForm;
+            }
+            if (elements.promptTone && state.promptTone) {
+                elements.promptTone.value = state.promptTone;
+            }
+            if (elements.codexIdea) {
+                elements.codexIdea.value = state.codexIdea;
             }
 
             // Restore UI
@@ -579,12 +1044,16 @@ function restoreState() {
             render.music();
             render.art();
             render.tarot();
+            render.prompt();
+            render.codex();
+            render.favorites();
         } catch (e) {
             console.error('Failed to restore state', e);
         }
     } else {
         // Default to characters tab if no state
         switchTab('characters');
+        render.favorites();
     }
 }
 
@@ -624,6 +1093,21 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.generateArtBtn = document.getElementById('generate-art');
     elements.copyArtBtn = document.getElementById('copy-art');
     elements.artResult = document.getElementById('art-result');
+    elements.promptForm = document.getElementById('prompt-form');
+    elements.promptTone = document.getElementById('prompt-tone');
+    elements.generatePromptBtn = document.getElementById('generate-prompt');
+    elements.copyPromptBtn = document.getElementById('copy-prompt');
+    elements.savePromptBtn = document.getElementById('save-prompt');
+    elements.promptResult = document.getElementById('prompt-result');
+    elements.codexIdea = document.getElementById('codex-idea');
+    elements.generateCodexBtn = document.getElementById('generate-codex');
+    elements.copyCodexBtn = document.getElementById('copy-codex');
+    elements.saveCodexBtn = document.getElementById('save-codex');
+    elements.codexResult = document.getElementById('codex-result');
+    elements.saveCharBtn = document.getElementById('save-char');
+    elements.exportFavoritesBtn = document.getElementById('export-favorites');
+    elements.favoritesResult = document.getElementById('favorites-result');
+    elements.toast = document.getElementById('toast');
 
     // Attach Event Listeners
     if (elements.navButtons) {
@@ -638,6 +1122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.generateMusicBtn) elements.generateMusicBtn.addEventListener('click', generators.music);
     if (elements.generateArtBtn) elements.generateArtBtn.addEventListener('click', generators.art);
     if (elements.generateTarotBtn) elements.generateTarotBtn.addEventListener('click', generators.tarot);
+    if (elements.generatePromptBtn) elements.generatePromptBtn.addEventListener('click', generators.prompt);
+    if (elements.generateCodexBtn) elements.generateCodexBtn.addEventListener('click', generators.codex);
 
     if (elements.copyCharBtn) elements.copyCharBtn.addEventListener('click', () => {
         const text = utils.formatOutput(state.generated.characters);
@@ -664,6 +1150,57 @@ document.addEventListener('DOMContentLoaded', () => {
         if (text) utils.copyToClipboard(text);
     });
 
+    if (elements.copyPromptBtn) elements.copyPromptBtn.addEventListener('click', () => {
+        utils.copyToClipboard(state.generated.prompt && state.generated.prompt['Prompt']);
+    });
+
+    if (elements.copyCodexBtn) elements.copyCodexBtn.addEventListener('click', () => {
+        utils.copyToClipboard(state.generated.codex && state.generated.codex['Prompt']);
+    });
+
+    if (elements.savePromptBtn) elements.savePromptBtn.addEventListener('click', () => {
+        saveFavorite('Story prompt', state.generated.prompt && state.generated.prompt['Prompt']);
+    });
+
+    if (elements.saveCodexBtn) elements.saveCodexBtn.addEventListener('click', () => {
+        saveFavorite('Codex spin', state.generated.codex && state.generated.codex['Prompt']);
+    });
+
+    if (elements.saveCharBtn) elements.saveCharBtn.addEventListener('click', () => {
+        saveFavorite('Character', utils.formatOutput(state.generated.characters));
+    });
+
+    if (elements.exportFavoritesBtn) elements.exportFavoritesBtn.addEventListener('click', exportFavorites);
+
+    if (elements.promptForm) {
+        elements.promptForm.addEventListener('change', () => {
+            state.promptForm = elements.promptForm.value;
+            if (state.generated.prompt && state.generated.prompt['Prompt']) {
+                state.generated.prompt['Prompt'] = buildPromptText(state.generated.prompt);
+                render.prompt();
+            }
+            saveState();
+        });
+    }
+
+    if (elements.promptTone) {
+        elements.promptTone.addEventListener('change', () => {
+            state.promptTone = elements.promptTone.value;
+            if (state.generated.prompt && state.generated.prompt['Prompt']) {
+                state.generated.prompt['Prompt'] = buildPromptText(state.generated.prompt);
+                render.prompt();
+            }
+            saveState();
+        });
+    }
+
+    if (elements.codexIdea) {
+        elements.codexIdea.addEventListener('input', () => {
+            state.codexIdea = elements.codexIdea.value;
+            saveState();
+        });
+    }
+
     // Load Data
     loadData();
 
@@ -680,8 +1217,11 @@ const originalGenerators = { ...generators };
 Object.keys(generators).forEach(key => {
     const original = generators[key];
     generators[key] = () => {
-        if (!state.data[key === 'tarot' ? 'characters' : key]) {
-            alert('Data not loaded yet. Please wait...');
+        const needsCharacters = key === 'tarot' || key === 'prompt' || key === 'codex';
+        const needsStories = key === 'prompt' || key === 'codex' || key === 'stories';
+        const dataKey = needsCharacters ? 'characters' : (needsStories ? 'stories' : key);
+        if (!state.data[dataKey] || (needsStories && !state.data.stories) || (key === 'prompt' && !state.data.characters)) {
+            showToast('Data is still loading-- try again in a moment.');
             return;
         }
         original();
